@@ -5,8 +5,16 @@ use panic_halt as _;
 
 use stm32f4xx_hal as hal;
 
-use crate::hal::{pac, prelude::*};
+mod board;
+mod button;
+mod delay;
+mod exti;
+mod lcd;
+mod led;
+mod serial;
+
 use cortex_m_rt::entry;
+use core::fmt::Write;
 
 use rtt_target::{rprintln, rtt_init_print};
 
@@ -14,7 +22,21 @@ use rtt_target::{rprintln, rtt_init_print};
 fn main() -> ! {
     rtt_init_print!();
 
+    let mut board = board::Board::new();
+    let _ = writeln!(&mut board.serial, "dino board init");
+    board.leds.all_off();
+    rprintln!("board init ok");
+    board.lcd.clear(0x0000); // 初始清屏为黑
+
     loop {
-        rprintln!("Hello world!");
+        let _ = board.leds.led1.toggle();
+        board.delay.ms(500);
+
+        if board.buttons.key1_pressed() {
+            rprintln!("KEY1 pressed");
+        }
+        if board.buttons.key4_pressed() {
+            rprintln!("KEY4 pressed");
+        }
     }
 }
