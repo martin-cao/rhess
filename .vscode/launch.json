@@ -27,7 +27,7 @@
           "coreIndex": 0,
           "rttEnabled": true,
           //!MODIFY
-          "programBinary": "target/thumbv7em-none-eabihf/debug/blink",
+          "programBinary": "target/thumbv7em-none-eabihf/debug/dino",
           //!MODIFY
         //   "svdFile": "Relative or fully qualified path to the CMSIS-SVD file for your target core"
         }

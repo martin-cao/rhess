@@ -24,18 +24,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46afbd2983a5d5a7bd740ccb198caf5b82f45c40c09c0eed36052d91cb92e719"
 
 [[package]]
-name = "blink"
-version = "0.1.0"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "embedded-hal 1.0.0",
- "panic-halt",
- "rtt-target",
- "stm32f4xx-hal",
-]
-
-[[package]]
 name = "cortex-m"
 version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -81,6 +69,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ececcb659e7ba858fb4f10388c250a7252eb0a27373f1a72b8748afdd248e587"
 dependencies = [
  "powerfmt",
+]
+
+[[package]]
+name = "dino"
+version = "0.1.0"
+dependencies = [
+ "cortex-m",
+ "cortex-m-rt",
+ "embedded-hal 1.0.0",
+ "panic-halt",
+ "rtt-target",
+ "stm32f4xx-hal",
 ]
 
 [[package]]
