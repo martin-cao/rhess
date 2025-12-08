@@ -24,7 +24,7 @@ fn main() -> ! {
     board.lcd.clear(0x0000); // 初始清屏为黑
 
     loop {
-        let _ = board.leds.led1.toggle();
+        board.leds.led1.toggle();
         board.delay.ms(500);
 
         if board.buttons.key1_pressed() {

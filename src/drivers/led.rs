@@ -25,16 +25,16 @@ impl Leds {
     }
 
     pub fn all_off(&mut self) {
-        let _ = self.led1.set_high();
-        let _ = self.led2.set_high();
-        let _ = self.led3.set_high();
-        let _ = self.led4.set_high();
+        self.led1.set_high();
+        self.led2.set_high();
+        self.led3.set_high();
+        self.led4.set_high();
     }
 
     pub fn all_toggle(&mut self) {
-        let _ = self.led1.toggle();
-        let _ = self.led2.toggle();
-        let _ = self.led3.toggle();
-        let _ = self.led4.toggle();
+        self.led1.toggle();
+        self.led2.toggle();
+        self.led3.toggle();
+        self.led4.toggle();
     }
 }

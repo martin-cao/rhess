@@ -131,7 +131,7 @@ impl Lcd {
 
     pub fn init(&mut self, delay: &mut crate::drivers::delay::Delay) {
         // 打开背光
-        let _ = self.backlight.set_high();
+        self.backlight.set_high();
         let id = self.read_id();
         if id != SSD1963_ID {
             // 若读不到 ID，仍尝试初始化
@@ -174,7 +174,7 @@ impl Lcd {
         self.write_data((ht - 1) & 0xFF);
         self.write_data(46 >> 8);
         self.write_data(46 & 0xFF);
-        self.write_data(1 - 1); // 脉宽
+        self.write_data(0); // 脉宽
         self.write_data(0x00);
         self.write_data(0x00);
         self.write_data(0x00);
