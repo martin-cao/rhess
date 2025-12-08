@@ -129,7 +129,7 @@ impl Lcd {
         }
     }
 
-    pub fn init(&mut self, delay: &mut crate::delay::Delay) {
+    pub fn init(&mut self, delay: &mut crate::drivers::delay::Delay) {
         // 打开背光
         let _ = self.backlight.set_high();
         let id = self.read_id();

@@ -1,8 +1,8 @@
 use crate::hal;
 use hal::pac;
+use hal::prelude::*;
 use hal::rcc::Clocks;
 use hal::timer::{SysDelay, Timer};
-use hal::prelude::*;
 
 /// SysTick 基础延时，毫秒/微秒。
 pub struct Delay {

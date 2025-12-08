@@ -1,5 +1,11 @@
 use crate::hal;
-use crate::{button::Buttons, delay::Delay, lcd::Lcd, led::Leds, serial::SerialPort};
+use crate::drivers::{
+    button::Buttons,
+    delay::Delay,
+    lcd::{Lcd, LcdPins},
+    led::Leds,
+    serial::SerialPort,
+};
 use cortex_m::peripheral::Peripherals as CorePeripherals;
 use hal::pac;
 use hal::prelude::*;
@@ -56,7 +62,7 @@ impl Board {
         let buttons = Buttons::new(pe2, pe3, pe4, pa0);
 
         // LCD pins拆出后传入
-        let lcd_pins = crate::lcd::LcdPins {
+        let lcd_pins = LcdPins {
             pd0: gpiod.pd0,
             pd1: gpiod.pd1,
             pd4: gpiod.pd4,

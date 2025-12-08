@@ -6,12 +6,7 @@ use panic_halt as _;
 use stm32f4xx_hal as hal;
 
 mod board;
-mod button;
-mod delay;
-mod exti;
-mod lcd;
-mod led;
-mod serial;
+mod drivers;
 
 use cortex_m_rt::entry;
 use core::fmt::Write;
