@@ -1,6 +1,11 @@
 //! SSD1963 LCD 驱动（480x272，FSMC 16bit 并口），参考实验5 C 代码。
 
 use crate::hal;
+use core::convert::Infallible;
+use embedded_graphics_core::geometry::Size;
+use embedded_graphics_core::pixelcolor::Rgb565;
+use embedded_graphics_core::prelude::*;
+use embedded_graphics_core::Pixel;
 use hal::gpio::{gpiod, gpioe, gpiog, Input, Output, PushPull};
 use hal::pac;
 
@@ -49,7 +54,7 @@ pub struct Lcd {
 }
 
 impl Lcd {
-    pub fn new(fsmc: pac::FSMC, mut pins: LcdPins) -> Self {
+    pub fn new(fsmc: pac::FSMC, pins: LcdPins) -> Self {
         // GPIO 复用为 FSMC AF12
         pins.pd0.into_alternate::<12>();
         pins.pd1.into_alternate::<12>();
@@ -258,5 +263,40 @@ impl Lcd {
         let id_high = self.read_data();
         let id_low = self.read_data();
         (id_high << 8) | (id_low & 0xFF)
+    }
+}
+
+impl OriginDimensions for Lcd {
+    fn size(&self) -> Size {
+        Size::new(self.width as u32, self.height as u32)
+    }
+}
+
+impl DrawTarget for Lcd {
+    type Color = Rgb565;
+    type Error = Infallible;
+
+    fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        for Pixel(point, color) in pixels {
+            if point.x < 0 || point.y < 0 {
+                continue;
+            }
+            let (x, y) = (point.x as u16, point.y as u16);
+            if x >= self.width || y >= self.height {
+                continue;
+            }
+            self.set_window(x, y, x, y);
+            self.write_reg(0x002C);
+            self.write_data(color.into_storage());
+        }
+        Ok(())
+    }
+
+    fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
+        self.clear(color.into_storage());
+        Ok(())
     }
 }
