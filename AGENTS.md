@@ -1,10 +1,8 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `src/dino/src/`: Embedded Rust entry (`main.rs`) and future drivers; `memory.x` provides the STM32F407ZGT6 linker script.
-- `src/dino/Cargo.toml`: Crate metadata and MCU/HAL dependencies; adjust features here when new peripherals are used.
-- `lab/src/`: Reference C implementations for GPIO/EXTI/UART/SysTick/LCD timing (read-only guidance).
-- `docs/`: Board schematic and prior lab taskbooks for pinout and timing details.
+- `src/`: Embedded Rust entry (`main.rs`) and future drivers; `memory.x` provides the STM32F407ZGT6 linker script.
+- `Cargo.toml`: Crate metadata and MCU/HAL dependencies; adjust features here when new peripherals are used.
 
 ## Build, Test, and Development Commands
 - `cargo build --release --target thumbv7em-none-eabihf`: Produce optimized firmware binary for F407 with hardware FPU.
