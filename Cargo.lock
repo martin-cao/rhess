@@ -84,20 +84,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dino"
-version = "0.1.0"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "embedded-graphics-core",
- "embedded-hal 1.0.0",
- "nb 1.1.0",
- "panic-halt",
- "rtt-target",
- "stm32f4xx-hal",
-]
-
-[[package]]
 name = "document-features"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -282,6 +268,20 @@ name = "rand_core"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38"
+
+[[package]]
+name = "rhess"
+version = "0.1.0"
+dependencies = [
+ "cortex-m",
+ "cortex-m-rt",
+ "embedded-graphics-core",
+ "embedded-hal 1.0.0",
+ "nb 1.1.0",
+ "panic-halt",
+ "rtt-target",
+ "stm32f4xx-hal",
+]
 
 [[package]]
 name = "rtt-target"
