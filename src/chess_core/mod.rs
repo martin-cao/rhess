@@ -283,8 +283,12 @@ impl GameState {
                 match piece.kind {
                     PieceKind::Pawn => self.gen_pawn_moves(idx as u8, piece.color, list),
                     PieceKind::Knight => self.gen_knight_moves(idx as u8, piece.color, list),
-                    PieceKind::Bishop => self.gen_slider_moves(idx as u8, piece.color, list, &[9, 7, -9, -7]),
-                    PieceKind::Rook => self.gen_slider_moves(idx as u8, piece.color, list, &[8, -8, 1, -1]),
+                    PieceKind::Bishop => {
+                        self.gen_slider_moves(idx as u8, piece.color, list, &[9, 7, -9, -7])
+                    }
+                    PieceKind::Rook => {
+                        self.gen_slider_moves(idx as u8, piece.color, list, &[8, -8, 1, -1])
+                    }
                     PieceKind::Queen => self.gen_slider_moves(
                         idx as u8,
                         piece.color,
@@ -516,7 +520,11 @@ impl GameState {
 
         // Handle captures and special pawn captures.
         if mv.is_en_passant {
-            let dir = if moving_piece.color == Color::White { -8 } else { 8 };
+            let dir = if moving_piece.color == Color::White {
+                -8
+            } else {
+                8
+            };
             let captured_sq = (mv.to as i16 + dir) as u8;
             self.board[captured_sq as usize] = None;
         } else if self.board[mv.to as usize].is_some() {
@@ -601,10 +609,9 @@ impl GameState {
     }
 
     pub fn is_in_check(&self, color: Color) -> bool {
-        let king_sq = self
-            .board
-            .iter()
-            .position(|p| matches!(p, Some(Piece { color: c, kind: PieceKind::King }) if *c == color));
+        let king_sq = self.board.iter().position(
+            |p| matches!(p, Some(Piece { color: c, kind: PieceKind::King }) if *c == color),
+        );
         match king_sq {
             Some(sq) => self.is_square_attacked(sq as u8, color.opposite()),
             None => false,
@@ -620,10 +627,10 @@ impl GameState {
             if target >= 0 && target < 64 {
                 let from = target as u8;
                 if file_distance(sq, from) == 1 {
-                if let Some(piece) = self.board[from as usize] {
-                    if piece.color == by && piece.kind == PieceKind::Pawn {
-                        return true;
-                    }
+                    if let Some(piece) = self.board[from as usize] {
+                        if piece.color == by && piece.kind == PieceKind::Pawn {
+                            return true;
+                        }
                     }
                 }
             }
@@ -795,11 +802,7 @@ fn file_of(sq: u8) -> u8 {
 fn file_distance(a: u8, b: u8) -> u8 {
     let fa = file_of(a);
     let fb = file_of(b);
-    if fa > fb {
-        fa - fb
-    } else {
-        fb - fa
-    }
+    if fa > fb { fa - fb } else { fb - fa }
 }
 
 fn wraps(from: u8, to: u8, dir: i8) -> bool {

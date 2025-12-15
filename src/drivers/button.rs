@@ -20,6 +20,10 @@ pub struct Buttons {
     key2: PE3<Input>,
     key3: PE4<Input>,
     key4: PA0<Input>,
+    key1_long_latched: bool,
+    key2_long_latched: bool,
+    key3_long_latched: bool,
+    key4_long_latched: bool,
 }
 
 impl Buttons {
@@ -29,27 +33,31 @@ impl Buttons {
             key2,
             key3,
             key4,
+            key1_long_latched: false,
+            key2_long_latched: false,
+            key3_long_latched: false,
+            key4_long_latched: false,
         }
     }
 
     #[inline]
     pub fn key1_press(&mut self, delay: &mut Delay) -> Option<PressKind> {
-        detect_press(&mut self.key1, delay)
+        detect_press(&mut self.key1, &mut self.key1_long_latched, delay)
     }
 
     #[inline]
     pub fn key2_press(&mut self, delay: &mut Delay) -> Option<PressKind> {
-        detect_press(&mut self.key2, delay)
+        detect_press(&mut self.key2, &mut self.key2_long_latched, delay)
     }
 
     #[inline]
     pub fn key3_press(&mut self, delay: &mut Delay) -> Option<PressKind> {
-        detect_press(&mut self.key3, delay)
+        detect_press(&mut self.key3, &mut self.key3_long_latched, delay)
     }
 
     #[inline]
     pub fn key4_press(&mut self, delay: &mut Delay) -> Option<PressKind> {
-        detect_press(&mut self.key4, delay)
+        detect_press(&mut self.key4, &mut self.key4_long_latched, delay)
     }
 
     #[inline]
@@ -99,8 +107,18 @@ pub enum PressKind {
     Long,
 }
 
-fn detect_press<P: InputPin>(pin: &mut P, delay: &mut Delay) -> Option<PressKind> {
+fn detect_press<P: InputPin>(
+    pin: &mut P,
+    long_latched: &mut bool,
+    delay: &mut Delay,
+) -> Option<PressKind> {
+    // 若已报告长按且仍保持按下，不重复触发，等待松手后复位。
+    if *long_latched && is_low(pin) {
+        return None;
+    }
+
     if !is_low(pin) {
+        *long_latched = false;
         return None;
     }
 
@@ -113,7 +131,7 @@ fn detect_press<P: InputPin>(pin: &mut P, delay: &mut Delay) -> Option<PressKind
     let mut held_ms = 0;
     while is_low(pin) {
         if held_ms >= LONG_PRESS_MS {
-            wait_for_release(pin, delay);
+            *long_latched = true;
             return Some(PressKind::Long);
         }
 
@@ -122,12 +140,6 @@ fn detect_press<P: InputPin>(pin: &mut P, delay: &mut Delay) -> Option<PressKind
     }
 
     Some(PressKind::Short)
-}
-
-fn wait_for_release<P: InputPin>(pin: &mut P, delay: &mut Delay) {
-    while is_low(pin) {
-        delay.ms(POLL_INTERVAL_MS);
-    }
 }
 
 #[inline]

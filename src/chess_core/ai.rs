@@ -40,7 +40,14 @@ pub fn choose_best_move(state: &GameState, ai_color: Color, cfg: AiConfig) -> Op
     for mv in moves.iter() {
         if let Some(next) = state.make_move(*mv) {
             ctx.bump();
-            let score = alphabeta(&next, ai_color, depth.saturating_sub(1), i32::MIN + 1, i32::MAX - 1, &mut ctx);
+            let score = alphabeta(
+                &next,
+                ai_color,
+                depth.saturating_sub(1),
+                i32::MIN + 1,
+                i32::MAX - 1,
+                &mut ctx,
+            );
             if score > best_score {
                 best_score = score;
                 best_mv = Some(*mv);
@@ -72,7 +79,14 @@ impl SearchCtx {
     }
 }
 
-fn alphabeta(state: &GameState, ai_color: Color, depth: u8, mut alpha: i32, mut beta: i32, ctx: &mut SearchCtx) -> i32 {
+fn alphabeta(
+    state: &GameState,
+    ai_color: Color,
+    depth: u8,
+    mut alpha: i32,
+    mut beta: i32,
+    ctx: &mut SearchCtx,
+) -> i32 {
     ctx.bump();
     if depth == 0 || ctx.hit_limit() {
         return evaluate(state, ai_color);

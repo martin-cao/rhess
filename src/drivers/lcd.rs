@@ -252,6 +252,31 @@ impl Lcd {
         }
     }
 
+    /// 单像素绘制（范围外将被忽略）。
+    pub fn draw_pixel(&mut self, x: u16, y: u16, color: u16) {
+        if x >= self.width || y >= self.height {
+            return;
+        }
+        self.set_window(x, y, x, y);
+        self.write_reg(0x002C);
+        self.write_data(color);
+    }
+
+    /// 填充指定矩形区域为单一颜色（坐标超出屏幕时自动裁剪）。
+    pub fn fill_rect(&mut self, x: u16, y: u16, width: u16, height: u16, color: u16) {
+        if width == 0 || height == 0 || x >= self.width || y >= self.height {
+            return;
+        }
+        let xe = x.saturating_add(width - 1).min(self.width - 1);
+        let ye = y.saturating_add(height - 1).min(self.height - 1);
+        self.set_window(x, y, xe, ye);
+        self.write_reg(0x002C);
+        let pixels = (xe - x + 1) as u32 * (ye - y + 1) as u32;
+        for _ in 0..pixels {
+            self.write_data(color);
+        }
+    }
+
     pub fn set_window(&mut self, xs: u16, ys: u16, xe: u16, ye: u16) {
         self.write_reg(0x002A);
         self.write_data(xs >> 8);
