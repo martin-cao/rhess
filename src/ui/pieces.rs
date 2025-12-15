@@ -3,8 +3,8 @@ use crate::drivers::lcd::Lcd;
 use crate::ui::chessboard::SQUARE_SIZE;
 
 // 统一的棋子位图尺寸（16x20 单色，居中绘制）
-const SPRITE_W: usize = 16;
-const SPRITE_H: usize = 20;
+pub const SPRITE_W: usize = 16;
+pub const SPRITE_H: usize = 20;
 
 // RGB565: 白棋纯白，黑棋纯黑
 const WHITE_FG: u16 = 0xFFFF;
@@ -64,21 +64,22 @@ pub fn draw_piece_on_square(
     file: u8,
     rank_from_bottom: u8,
 ) {
+    draw_piece_on_square_custom(lcd, kind, color, file, rank_from_bottom, None);
+}
+
+pub fn draw_piece_on_square_custom(
+    lcd: &mut Lcd,
+    kind: PieceKind,
+    color: Color,
+    file: u8,
+    rank_from_bottom: u8,
+    override_color: Option<u16>,
+) {
     if file >= 8 || rank_from_bottom >= 8 {
         return;
     }
-    let sprite = match kind {
-        PieceKind::Pawn => &PAWN,
-        PieceKind::Rook => &ROOK,
-        PieceKind::Knight => &KNIGHT,
-        PieceKind::Bishop => &BISHOP,
-        PieceKind::Queen => &QUEEN,
-        PieceKind::King => &KING,
-    };
-    let fg = match color {
-        Color::White => WHITE_FG,
-        Color::Black => BLACK_FG,
-    };
+    let sprite = sprite_for_kind(kind);
+    let fg = override_color.unwrap_or_else(|| default_piece_color(color));
 
     let base_x = file as u16 * SQUARE_SIZE;
     // rank_from_bottom=0 表示底部（白方后排），因此需要从屏幕顶部反转
@@ -87,10 +88,42 @@ pub fn draw_piece_on_square(
     let offset_x = base_x + (SQUARE_SIZE - SPRITE_W as u16) / 2;
     let offset_y = base_y + (SQUARE_SIZE - SPRITE_H as u16) / 2;
 
-    draw_sprite(lcd, sprite, fg, offset_x, offset_y);
+    draw_sprite_at(lcd, sprite, fg, offset_x, offset_y);
 }
 
-fn draw_sprite(lcd: &mut Lcd, sprite: &Sprite, fg: u16, start_x: u16, start_y: u16) {
+/// 在任意像素坐标绘制棋子图标（左上角对齐），可传入自定义颜色。
+pub fn draw_piece_icon(
+    lcd: &mut Lcd,
+    kind: PieceKind,
+    color: Color,
+    x: u16,
+    y: u16,
+    override_color: Option<u16>,
+) {
+    let sprite = sprite_for_kind(kind);
+    let fg = override_color.unwrap_or_else(|| default_piece_color(color));
+    draw_sprite_at(lcd, sprite, fg, x, y);
+}
+
+fn default_piece_color(color: Color) -> u16 {
+    match color {
+        Color::White => WHITE_FG,
+        Color::Black => BLACK_FG,
+    }
+}
+
+fn sprite_for_kind(kind: PieceKind) -> &'static Sprite {
+    match kind {
+        PieceKind::Pawn => &PAWN,
+        PieceKind::Rook => &ROOK,
+        PieceKind::Knight => &KNIGHT,
+        PieceKind::Bishop => &BISHOP,
+        PieceKind::Queen => &QUEEN,
+        PieceKind::King => &KING,
+    }
+}
+
+fn draw_sprite_at(lcd: &mut Lcd, sprite: &Sprite, fg: u16, start_x: u16, start_y: u16) {
     for (row_idx, bits) in sprite.rows.iter().enumerate() {
         let y = start_y + row_idx as u16;
         if y >= lcd.height {
