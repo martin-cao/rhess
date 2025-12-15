@@ -7,6 +7,7 @@ use stm32f4xx_hal as hal;
 
 mod board;
 mod drivers;
+mod core;
 
 use cortex_m_rt::entry;
 use core::fmt::Write;
