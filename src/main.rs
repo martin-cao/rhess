@@ -41,7 +41,7 @@ fn main() -> ! {
         } else if board.buttons.key4_pressed() {
             board.leds.all_off();
             board.leds.led4.set_low();
-            board.lcd.clear(0x001F); // 蓝
+            board.lcd.clear(0xFFFF); // 白
             rprintln!("KEY4 -> LED4 blue screen");
         }
 

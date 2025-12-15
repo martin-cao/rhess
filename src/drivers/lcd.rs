@@ -6,7 +6,7 @@ use embedded_graphics_core::geometry::Size;
 use embedded_graphics_core::pixelcolor::Rgb565;
 use embedded_graphics_core::prelude::*;
 use embedded_graphics_core::Pixel;
-use hal::gpio::{gpiod, gpioe, gpiog, Input, Output, PushPull};
+use hal::gpio::{gpiod, gpioe, gpiog, Input, Output, PushPull, Speed};
 use hal::pac;
 
 const LCD_BASE: u32 = 0x6C00_0000 | 0x0000_07FE;
@@ -55,30 +55,51 @@ pub struct Lcd {
 
 impl Lcd {
     pub fn new(fsmc: pac::FSMC, pins: LcdPins) -> Self {
-        // GPIO 复用为 FSMC AF12
-        pins.pd0.into_alternate::<12>();
-        pins.pd1.into_alternate::<12>();
-        pins.pd4.into_alternate::<12>();
-        pins.pd5.into_alternate::<12>();
-        pins.pd8.into_alternate::<12>();
-        pins.pd9.into_alternate::<12>();
-        pins.pd10.into_alternate::<12>();
-        pins.pd14.into_alternate::<12>();
-        pins.pd15.into_alternate::<12>();
+        // GPIO 复用为 FSMC AF12，设置为高速（对齐参考 C 工程）
+        let mut pd0 = pins.pd0.into_alternate::<12>();
+        pd0.set_speed(Speed::VeryHigh);
+        let mut pd1 = pins.pd1.into_alternate::<12>();
+        pd1.set_speed(Speed::VeryHigh);
+        let mut pd4 = pins.pd4.into_alternate::<12>();
+        pd4.set_speed(Speed::VeryHigh);
+        let mut pd5 = pins.pd5.into_alternate::<12>();
+        pd5.set_speed(Speed::VeryHigh);
+        let mut pd8 = pins.pd8.into_alternate::<12>();
+        pd8.set_speed(Speed::VeryHigh);
+        let mut pd9 = pins.pd9.into_alternate::<12>();
+        pd9.set_speed(Speed::VeryHigh);
+        let mut pd10 = pins.pd10.into_alternate::<12>();
+        pd10.set_speed(Speed::VeryHigh);
+        let mut pd14 = pins.pd14.into_alternate::<12>();
+        pd14.set_speed(Speed::VeryHigh);
+        let mut pd15 = pins.pd15.into_alternate::<12>();
+        pd15.set_speed(Speed::VeryHigh);
 
-        pins.pe7.into_alternate::<12>();
-        pins.pe8.into_alternate::<12>();
-        pins.pe9.into_alternate::<12>();
-        pins.pe10.into_alternate::<12>();
-        pins.pe11.into_alternate::<12>();
-        pins.pe12.into_alternate::<12>();
-        pins.pe13.into_alternate::<12>();
-        pins.pe14.into_alternate::<12>();
-        pins.pe15.into_alternate::<12>();
+        let mut pe7 = pins.pe7.into_alternate::<12>();
+        pe7.set_speed(Speed::VeryHigh);
+        let mut pe8 = pins.pe8.into_alternate::<12>();
+        pe8.set_speed(Speed::VeryHigh);
+        let mut pe9 = pins.pe9.into_alternate::<12>();
+        pe9.set_speed(Speed::VeryHigh);
+        let mut pe10 = pins.pe10.into_alternate::<12>();
+        pe10.set_speed(Speed::VeryHigh);
+        let mut pe11 = pins.pe11.into_alternate::<12>();
+        pe11.set_speed(Speed::VeryHigh);
+        let mut pe12 = pins.pe12.into_alternate::<12>();
+        pe12.set_speed(Speed::VeryHigh);
+        let mut pe13 = pins.pe13.into_alternate::<12>();
+        pe13.set_speed(Speed::VeryHigh);
+        let mut pe14 = pins.pe14.into_alternate::<12>();
+        pe14.set_speed(Speed::VeryHigh);
+        let mut pe15 = pins.pe15.into_alternate::<12>();
+        pe15.set_speed(Speed::VeryHigh);
 
-        pins.pg0.into_alternate::<12>(); // A10 -> 8080 RS
-        pins.pg12.into_alternate::<12>(); // NE4
-        let backlight = pins.pg6.into_push_pull_output(); // LCD_LED
+        let mut pg0 = pins.pg0.into_alternate::<12>(); // A10 -> 8080 RS
+        pg0.set_speed(Speed::VeryHigh);
+        let mut pg12 = pins.pg12.into_alternate::<12>(); // NE4
+        pg12.set_speed(Speed::VeryHigh);
+        let mut backlight = pins.pg6.into_push_pull_output(); // LCD_LED
+        backlight.set_speed(Speed::VeryHigh);
 
         // 使能 FSMC 时钟
         unsafe {
@@ -92,7 +113,7 @@ impl Lcd {
         f.bcr4().modify(|_, w| w.mbken().clear_bit());
 
         // 读时序（较宽容）
-        f.btr4().modify(|_, w| unsafe {
+        f.btr4().write(|w| unsafe {
             w.addset().bits(0xF);
             w.addhld().bits(0);
             w.datast().bits(60);
@@ -102,7 +123,7 @@ impl Lcd {
             w.accmod().bits(0)
         });
         // 写时序（较快）
-        f.bwtr4().modify(|_, w| unsafe {
+        f.bwtr4().write(|w| unsafe {
             w.addset().bits(9);
             w.addhld().bits(0);
             w.datast().bits(8);
@@ -110,15 +131,23 @@ impl Lcd {
             w.accmod().bits(0)
         });
         // 基本控制
-        f.bcr4().modify(|_, w| unsafe {
+        f.bcr4().write(|w| unsafe {
             w.muxen().clear_bit(); // 地址数据不复用
             w.mtyp().bits(0b00); // SRAM
             w.mwid().bits(0b01); // 16bit
+            w.faccen().clear_bit(); // 关闭 Flash 访问
+            w.bursten().clear_bit();
+            w.waitpol().clear_bit();
+            w.wrapmod().clear_bit();
+            w.waitcfg().clear_bit();
             w.wren().set_bit(); // 允许写
+            w.waiten().clear_bit();
             w.extmod().set_bit(); // 读写不同定时
-            w
+            w.asyncwait().clear_bit();
+            w.cpsize().bits(0);
+            w.cburstrw().clear_bit();
+            w.mbken().set_bit() // 使能 bank
         });
-        f.bcr4().modify(|_, w| w.mbken().set_bit()); // 使能 bank
 
         Lcd {
             regs: LCD_BASE as *mut Regs,

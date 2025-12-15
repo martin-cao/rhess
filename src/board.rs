@@ -27,11 +27,12 @@ impl Board {
         let cp = CorePeripherals::take().expect("core already taken");
 
         let rcc = dp.RCC.constrain();
-        // 外部 8MHz 晶振 → 168MHz SYSCLK，匹配参考 C 示例。
+        // 外部 25MHz 晶振 → 168MHz SYSCLK，对齐参考 C 示例与板卡硬件。
         let cfg = hal::rcc::Config::default()
-            .use_hse(8.MHz())
+            .use_hse(25.MHz())
             .sysclk(168.MHz())
-            .pclk1(42.MHz());
+            .pclk1(42.MHz())
+            .pclk2(84.MHz());
         let mut rcc = rcc.freeze(cfg);
         let clocks = rcc.clocks;
 
