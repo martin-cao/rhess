@@ -88,8 +88,10 @@ impl Board {
         };
 
         // 串口：USART1 TX=PA9, RX=PA10，115200 8N1
-        let tx = gpioa.pa9.into_alternate::<7>();
-        let rx = gpioa.pa10.into_alternate::<7>();
+        let mut tx = gpioa.pa9.into_alternate::<7>();
+        tx.set_speed(hal::gpio::Speed::VeryHigh);
+        let mut rx = gpioa.pa10.into_alternate::<7>();
+        rx.set_speed(hal::gpio::Speed::VeryHigh);
         let serial = SerialPort::new(dp.USART1, tx, rx, &mut rcc, 115_200.bps());
 
         // LCD：FSMC 16bit 总线 + SSD1963 初始化（480x272）。
