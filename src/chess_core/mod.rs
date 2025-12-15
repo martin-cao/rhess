@@ -1,6 +1,9 @@
 // Core chess engine targeted at bare-metal: no heap, fixed-size arrays only.
 // Coordinates use 0..63 (a1 = 0, h8 = 63) with rank = idx / 8, file = idx % 8.
 
+// Re-export the actual `core` crate so macros (e.g., RTT) using `core::...` keep working.
+pub use ::core::*;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Color {
     White,
