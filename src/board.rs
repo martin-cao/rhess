@@ -1,4 +1,3 @@
-use crate::hal;
 use crate::drivers::{
     button::Buttons,
     delay::Delay,
@@ -6,6 +5,7 @@ use crate::drivers::{
     led::Leds,
     serial::SerialPort,
 };
+use crate::hal;
 use cortex_m::peripheral::Peripherals as CorePeripherals;
 use hal::pac;
 use hal::prelude::*;

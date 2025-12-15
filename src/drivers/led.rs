@@ -1,5 +1,5 @@
 use crate::hal;
-use hal::gpio::{gpiob::PB0, gpiob::PB1, gpioc::PC0, gpiof::PF10, Output, PushPull};
+use hal::gpio::{Output, PushPull, gpiob::PB0, gpiob::PB1, gpioc::PC0, gpiof::PF10};
 
 /// 板载四个 LED（低电平点亮）。
 pub struct Leds {

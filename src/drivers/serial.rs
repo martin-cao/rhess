@@ -3,7 +3,7 @@ use core::fmt;
 
 use hal::pac;
 use hal::prelude::*;
-use hal::serial::{config::Config, CommonPins, Rx, Serial, Tx};
+use hal::serial::{CommonPins, Rx, Serial, Tx, config::Config};
 use hal::time::Bps;
 use nb::block;
 

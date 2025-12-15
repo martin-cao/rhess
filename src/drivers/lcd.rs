@@ -2,11 +2,11 @@
 
 use crate::hal;
 use core::convert::Infallible;
+use embedded_graphics_core::Pixel;
 use embedded_graphics_core::geometry::Size;
 use embedded_graphics_core::pixelcolor::Rgb565;
 use embedded_graphics_core::prelude::*;
-use embedded_graphics_core::Pixel;
-use hal::gpio::{gpiod, gpioe, gpiog, Input, Output, PushPull, Speed};
+use hal::gpio::{Input, Output, PushPull, Speed, gpiod, gpioe, gpiog};
 use hal::pac;
 
 const LCD_BASE: u32 = 0x6C00_0000 | 0x0000_07FE;
