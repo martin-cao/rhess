@@ -856,3 +856,4 @@ impl core::fmt::Display for GameState {
 }
 
 pub mod ai;
+pub mod book;
