@@ -10,6 +10,8 @@ mod chess_core;
 mod drivers;
 mod game;
 mod interaction;
+mod start_menu;
+mod start_menu_crab;
 mod ui;
 
 use cortex_m_rt::entry;
@@ -24,5 +26,12 @@ fn main() -> ! {
     board.leds.all_off();
     rprintln!("board init ok");
     board.lcd.clear(0x0000); // 初始清屏为黑
-    game::Game::run(&mut board);
+    let mode = start_menu::select_mode(&mut board);
+    let (ai_sides, human_focus) = match mode {
+        start_menu::Mode::HumanVsHuman => ([false, false], Some(chess_core::Color::White)),
+        start_menu::Mode::HumanVsComputer => ([false, true], Some(chess_core::Color::White)),
+        start_menu::Mode::ComputerVsHuman => ([true, false], Some(chess_core::Color::Black)),
+        start_menu::Mode::ComputerVsComputer => ([true, true], None),
+    };
+    game::Game::run(&mut board, ai_sides, human_focus);
 }

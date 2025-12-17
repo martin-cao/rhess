@@ -277,6 +277,28 @@ impl Lcd {
         }
     }
 
+    /// 绘制一块 RGB565 位图（行优先数据）。
+    pub fn blit_bitmap(&mut self, x: u16, y: u16, width: u16, height: u16, pixels: &[u16]) {
+        if width == 0 || height == 0 || x >= self.width || y >= self.height {
+            return;
+        }
+        let draw_w = width.min(self.width - x);
+        let draw_h = height.min(self.height - y);
+        if pixels.len() < width as usize * height as usize {
+            return;
+        }
+
+        self.set_window(x, y, x + draw_w - 1, y + draw_h - 1);
+        self.write_reg(0x002C);
+        for row in 0..draw_h as usize {
+            let start = row * width as usize;
+            let end = start + draw_w as usize;
+            for &px in &pixels[start..end] {
+                self.write_data(px);
+            }
+        }
+    }
+
     pub fn set_window(&mut self, xs: u16, ys: u16, xe: u16, ye: u16) {
         self.write_reg(0x002A);
         self.write_data(xs >> 8);

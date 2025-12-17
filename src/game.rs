@@ -12,11 +12,7 @@ const UI_ALERT: u16 = 0xF800; // 亮红色提示
 const LAST_MOVE_COLOR: u16 = 0xE540; // 柔和橙色，区分光标
 const RIGHT_X: u16 = chessboard::BOARD_SIZE;
 const RIGHT_MARGIN: u16 = 4;
-const AI_COLOR: Color = Color::Black;
-const PLAYER_COLOR: Color = match AI_COLOR {
-    Color::White => Color::Black,
-    Color::Black => Color::White,
-};
+const AI_MOVE_MIN_DELAY_MS: u32 = 1_000;
 
 pub struct Game {
     state: GameState,
@@ -24,6 +20,8 @@ pub struct Game {
     selected: Option<u8>, // 0..63
     promotion: Option<PromotionPrompt>,
     last_move: Option<(u8, u8)>,
+    ai_sides: [bool; 2],        // 白/黑是否由 AI 控制
+    human_focus: Option<Color>, // 用于右侧优势显示/是否被将死提示
 }
 
 #[derive(Clone, Copy)]
@@ -35,14 +33,17 @@ struct PromotionPrompt {
 }
 
 impl Game {
-    pub fn run(board: &mut Board) -> ! {
+    pub fn run(board: &mut Board, ai_sides: [bool; 2], human_focus: Option<Color>) -> ! {
         let mut game = Game {
             state: GameState::start_position(),
             cursor: (0, 0),
             selected: None,
             promotion: None,
             last_move: None,
+            ai_sides,
+            human_focus,
         };
+        board.lcd.clear(UI_BG);
         game.render(board);
 
         loop {
@@ -55,7 +56,7 @@ impl Game {
         if self.handle_promotion(board) {
             return;
         }
-        if self.state.side_to_move == AI_COLOR {
+        if self.is_ai_turn() {
             self.run_ai(board);
             return;
         }
@@ -100,7 +101,7 @@ impl Game {
         let (normal, promo_moves) = move_set.unwrap();
 
         // 若存在升变选项且当前为玩家回合，进入升变选择
-        if promo_moves.iter().any(|m| m.is_some()) && self.state.side_to_move != AI_COLOR {
+        if promo_moves.iter().any(|m| m.is_some()) && self.is_human_turn() {
             self.promotion = Some(PromotionPrompt {
                 from: src,
                 to: dst,
@@ -118,8 +119,8 @@ impl Game {
                 self.last_move = Some((mv.from, mv.to));
                 self.selected = None;
                 self.render(board); // 先显示玩家落子
-                // 白方落子后交给 AI（黑方）
-                if self.state.side_to_move == AI_COLOR {
+                // 人类落子后交给下一个 AI 方
+                if self.is_ai_turn() {
                     self.run_ai(board);
                 }
             }
@@ -224,7 +225,7 @@ impl Game {
             2,
         );
 
-        let diff = self.material_diff(PLAYER_COLOR);
+        let diff = self.material_diff(self.human_focus.unwrap_or(Color::White));
         let mut buf = [0u8; 12];
         let diff_str = i32_to_str(diff, &mut buf);
 
@@ -352,15 +353,17 @@ impl Game {
     }
 
     fn run_ai(&mut self, board: &mut Board) {
-        if self.state.side_to_move != AI_COLOR {
+        if !self.is_ai_turn() {
             return;
         }
+        board.delay.ms(AI_MOVE_MIN_DELAY_MS);
         let cfg = AiConfig::default();
         let mut spinner_step = 0u8;
         let mut spin = || {
             Self::advance_led_spinner(board, &mut spinner_step);
         };
-        let mv = choose_best_move(&self.state, AI_COLOR, cfg, &mut spin);
+        let ai_color = self.state.side_to_move;
+        let mv = choose_best_move(&self.state, ai_color, cfg, &mut spin);
         board.leds.all_off();
         if let Some(mv) = mv {
             if let Some(next) = self.state.make_move(mv) {
@@ -411,12 +414,30 @@ impl Game {
         }
     }
 
+    fn is_human_turn(&self) -> bool {
+        !self.is_ai_turn()
+    }
+
+    fn is_ai_turn(&self) -> bool {
+        self.ai_sides[Self::color_index(self.state.side_to_move)]
+    }
+
     fn is_player_checkmated(&self) -> bool {
-        if self.state.side_to_move != PLAYER_COLOR {
+        let Some(color) = self.human_focus else {
+            return false;
+        };
+        if self.state.side_to_move != color {
             return false;
         }
         let moves = self.state.generate_legal_moves();
-        moves.len == 0 && self.state.is_in_check(PLAYER_COLOR)
+        moves.len == 0 && self.state.is_in_check(color)
+    }
+
+    const fn color_index(color: Color) -> usize {
+        match color {
+            Color::White => 0,
+            Color::Black => 1,
+        }
     }
 }
 
