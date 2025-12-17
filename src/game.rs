@@ -345,10 +345,7 @@ impl Game {
         if self.state.side_to_move != AI_COLOR {
             return;
         }
-        let cfg = AiConfig {
-            max_depth: 2,
-            node_limit: Some(8_000),
-        };
+        let cfg = AiConfig::default();
         if let Some(mv) = choose_best_move(&self.state, AI_COLOR, cfg) {
             if let Some(next) = self.state.make_move(mv) {
                 self.state = next;
