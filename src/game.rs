@@ -258,17 +258,27 @@ impl Game {
     fn render_promotion_menu(&self, board: &mut Board, start_x: u16, prompt: PromotionPrompt) {
         let x = start_x + 2;
         let mut y = 80;
-        text::draw_text_scaled(&mut board.lcd, "Promote:", x, y, UI_FG, Some(UI_BG), 2);
+        text::draw_text_scaled(
+            &mut board.lcd,
+            "Promote (KEY1-4)",
+            x,
+            y,
+            UI_FG,
+            Some(UI_BG),
+            2,
+        );
         y += 24;
         let entries = [
-            ("1", PieceKind::Rook),
-            ("2", PieceKind::Knight),
-            ("3", PieceKind::Bishop),
-            ("4", PieceKind::Queen),
+            ("1", "Rook", PieceKind::Rook),
+            ("2", "Knight", PieceKind::Knight),
+            ("3", "Bishop", PieceKind::Bishop),
+            ("4", "Queen", PieceKind::Queen),
         ];
-        for (_idx, (num, kind)) in entries.iter().enumerate() {
+        for (_idx, (num, label, kind)) in entries.iter().copied().enumerate() {
             text::draw_text_scaled(&mut board.lcd, num, x, y, UI_FG, Some(UI_BG), 2);
-            pieces::draw_piece_icon(&mut board.lcd, *kind, prompt.color, x + 24, y, None);
+            text::draw_text_scaled(&mut board.lcd, label, x + 20, y, UI_FG, Some(UI_BG), 2);
+            // Place icon slightly above text baseline for better alignment.
+            pieces::draw_piece_icon(&mut board.lcd, kind, prompt.color, x + 90, y - 2, None);
             y += 28;
         }
     }
