@@ -8,6 +8,26 @@
 
 rhess is a bare-metal chess game for an STM32F407ZGT6 board with a 480x272 LCD.
 
+## Features
+
+- Full chess rules with legal move generation, promotion, check detection
+- On-board LCD UI with side info (turn, material diff, last move highlight)
+- AI opponent powered by a lightweight search (configurable depth)
+- Four start modes: Human vs Human, Human vs Computer, Computer vs Human, Computer vs Computer (AI side delay to make moves visible)
+
+## Controls
+
+- In-game navigation: KEY1 left, KEY2 down, KEY3 up, KEY4 right
+- KEY1 long press: select/deselect piece; KEY2 long press: submit move
+- Promotion: press KEY1..KEY4 for Rook/Knight/Bishop/Queen in order
+- Start menu: KEY3 up, KEY2 down, KEY1 confirm
+
+## Hardware
+
+- Target MCU: STM32F407ZGT6 (external 25 MHz HSE, 168 MHz SYSCLK)
+- Display: 480x272 LCD via FSMC + SSD1963 controller
+- Memory layout: see `memory.x` for flash/SRAM regions
+
 ## Build
 
 - Install [Rust](https://rust-lang.org/learn/get-started/)
