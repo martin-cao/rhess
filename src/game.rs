@@ -9,6 +9,7 @@ const SELECTED_PIECE_COLOR: u16 = 0xF800; // 红色
 const UI_BG: u16 = 0x0000; // 右侧背景
 const UI_FG: u16 = 0xFFFF; // 文本颜色
 const UI_ALERT: u16 = 0xF800; // 亮红色提示
+const LAST_MOVE_COLOR: u16 = 0xE540; // 柔和橙色，区分光标
 const RIGHT_X: u16 = chessboard::BOARD_SIZE;
 const RIGHT_MARGIN: u16 = 4;
 const AI_COLOR: Color = Color::Black;
@@ -22,6 +23,7 @@ pub struct Game {
     cursor: (u8, u8),     // (file, rank_from_bottom)
     selected: Option<u8>, // 0..63
     promotion: Option<PromotionPrompt>,
+    last_move: Option<(u8, u8)>,
 }
 
 #[derive(Clone, Copy)]
@@ -39,6 +41,7 @@ impl Game {
             cursor: (0, 0),
             selected: None,
             promotion: None,
+            last_move: None,
         };
         game.render(board);
 
@@ -112,6 +115,7 @@ impl Game {
         if let Some(mv) = normal.or_else(|| promo_moves.iter().flatten().next().copied()) {
             if let Some(next) = self.state.make_move(mv) {
                 self.state = next;
+                self.last_move = Some((mv.from, mv.to));
                 self.selected = None;
                 self.render(board); // 先显示玩家落子
                 // 白方落子后交给 AI（黑方）
@@ -136,10 +140,15 @@ impl Game {
         let is_promo_target = self.promotion.map_or(false, |p| p.to == idx);
         let is_promo_from = self.promotion.map_or(false, |p| p.from == idx);
         let is_cursor = self.cursor == (file, rank);
-        let square_color = if is_promo_target {
-            chessboard::PROMOTION_COLOR
-        } else if is_cursor {
+        let is_last_move = self
+            .last_move
+            .map_or(false, |(from, to)| from == idx || to == idx);
+        let square_color = if is_cursor {
             chessboard::HIGHLIGHT_COLOR
+        } else if is_last_move {
+            LAST_MOVE_COLOR
+        } else if is_promo_target {
+            chessboard::PROMOTION_COLOR
         } else {
             chessboard::square_color(file, rank)
         };
@@ -301,6 +310,7 @@ impl Game {
             if let Some(mv) = prompt.moves.get(idx).and_then(|m| *m) {
                 if let Some(next) = self.state.make_move(mv) {
                     self.state = next;
+                    self.last_move = Some((mv.from, mv.to));
                 }
             }
             self.promotion = None;
@@ -346,12 +356,38 @@ impl Game {
             return;
         }
         let cfg = AiConfig::default();
-        if let Some(mv) = choose_best_move(&self.state, AI_COLOR, cfg) {
+        let mut spinner_step = 0u8;
+        let mut spin = || {
+            Self::advance_led_spinner(board, &mut spinner_step);
+        };
+        let mv = choose_best_move(&self.state, AI_COLOR, cfg, &mut spin);
+        board.leds.all_off();
+        if let Some(mv) = mv {
             if let Some(next) = self.state.make_move(mv) {
+                self.last_move = Some((mv.from, mv.to));
                 self.state = next;
             }
         }
         self.render(board);
+    }
+
+    fn advance_led_spinner(board: &mut Board, step: &mut u8) {
+        board.leds.all_off();
+        match *step % 4 {
+            0 => {
+                let _ = board.leds.led1.set_low();
+            }
+            1 => {
+                let _ = board.leds.led2.set_low();
+            }
+            2 => {
+                let _ = board.leds.led3.set_low();
+            }
+            _ => {
+                let _ = board.leds.led4.set_low();
+            }
+        }
+        *step = step.wrapping_add(1);
     }
 
     fn material_scores(&self) -> (u32, u32) {

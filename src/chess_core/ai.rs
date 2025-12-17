@@ -25,7 +25,12 @@ impl Default for AiConfig {
     }
 }
 
-pub fn choose_best_move(state: &GameState, ai_color: Color, cfg: AiConfig) -> Option<Move> {
+pub fn choose_best_move<F: FnMut()>(
+    state: &GameState,
+    ai_color: Color,
+    cfg: AiConfig,
+    mut tick: F,
+) -> Option<Move> {
     if state.side_to_move != ai_color {
         return None;
     }
@@ -45,6 +50,7 @@ pub fn choose_best_move(state: &GameState, ai_color: Color, cfg: AiConfig) -> Op
     let mut best_score = i32::MIN + 1;
 
     for depth in 1..=depth_limit {
+        tick();
         let hash = zobrist(state);
         let tt_hint = ctx.tt_probe(hash).and_then(|e| e.best_move);
 
@@ -54,6 +60,7 @@ pub fn choose_best_move(state: &GameState, ai_color: Color, cfg: AiConfig) -> Op
 
         for mv in moves.iter() {
             if let Some(next) = state.make_move(*mv) {
+                tick();
                 ctx.bump();
                 let score = alphabeta(
                     &next,
