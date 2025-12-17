@@ -8,9 +8,14 @@ use rtt_target::rprintln;
 const SELECTED_PIECE_COLOR: u16 = 0xF800; // 红色
 const UI_BG: u16 = 0x0000; // 右侧背景
 const UI_FG: u16 = 0xFFFF; // 文本颜色
+const UI_ALERT: u16 = 0xF800; // 亮红色提示
 const RIGHT_X: u16 = chessboard::BOARD_SIZE;
 const RIGHT_MARGIN: u16 = 4;
 const AI_COLOR: Color = Color::Black;
+const PLAYER_COLOR: Color = match AI_COLOR {
+    Color::White => Color::Black,
+    Color::Black => Color::White,
+};
 
 pub struct Game {
     state: GameState,
@@ -210,15 +215,13 @@ impl Game {
             2,
         );
 
-        let (white_score, black_score) = self.material_scores();
-        let mut buf_w = [0u8; 10];
-        let mut buf_b = [0u8; 10];
-        let w_str = u32_to_str(white_score, &mut buf_w);
-        let b_str = u32_to_str(black_score, &mut buf_b);
+        let diff = self.material_diff(PLAYER_COLOR);
+        let mut buf = [0u8; 12];
+        let diff_str = i32_to_str(diff, &mut buf);
 
         text::draw_text_scaled(
             &mut board.lcd,
-            "Mat W:",
+            "Mat:",
             text_x,
             text_y + 20,
             UI_FG,
@@ -227,31 +230,25 @@ impl Game {
         );
         text::draw_text_scaled(
             &mut board.lcd,
-            w_str,
-            text_x + 72,
+            diff_str,
+            text_x + 64,
             text_y + 20,
             UI_FG,
             Some(UI_BG),
             2,
         );
-        text::draw_text_scaled(
-            &mut board.lcd,
-            "Mat B:",
-            text_x,
-            text_y + 40,
-            UI_FG,
-            Some(UI_BG),
-            2,
-        );
-        text::draw_text_scaled(
-            &mut board.lcd,
-            b_str,
-            text_x + 72,
-            text_y + 40,
-            UI_FG,
-            Some(UI_BG),
-            2,
-        );
+
+        if self.is_player_checkmated() {
+            text::draw_text_scaled(
+                &mut board.lcd,
+                "Being checkmated",
+                text_x,
+                text_y + 70,
+                UI_ALERT,
+                Some(UI_BG),
+                2,
+            );
+        }
 
         if let Some(prompt) = self.promotion {
             self.render_promotion_menu(board, start_x, prompt);
@@ -362,6 +359,22 @@ impl Game {
         }
         (white, black)
     }
+
+    fn material_diff(&self, player: Color) -> i32 {
+        let (white, black) = self.material_scores();
+        match player {
+            Color::White => white as i32 - black as i32,
+            Color::Black => black as i32 - white as i32,
+        }
+    }
+
+    fn is_player_checkmated(&self) -> bool {
+        if self.state.side_to_move != PLAYER_COLOR {
+            return false;
+        }
+        let moves = self.state.generate_legal_moves();
+        moves.len == 0 && self.state.is_in_check(PLAYER_COLOR)
+    }
 }
 
 fn material_value(kind: PieceKind) -> u32 {
@@ -386,5 +399,32 @@ fn u32_to_str<'a>(mut value: u32, buf: &'a mut [u8; 10]) -> &'a str {
         buf[i] = b'0' + (value % 10) as u8;
         value /= 10;
     }
+    core::str::from_utf8(&buf[i..]).unwrap()
+}
+
+fn i32_to_str<'a>(value: i32, buf: &'a mut [u8; 12]) -> &'a str {
+    let mut i = buf.len();
+    let mut val = if value < 0 {
+        (value as i64).abs() as u32
+    } else {
+        value as u32
+    };
+
+    if val == 0 {
+        buf[i - 1] = b'0';
+        return core::str::from_utf8(&buf[i - 1..i]).unwrap();
+    }
+
+    while val > 0 && i > 0 {
+        i -= 1;
+        buf[i] = b'0' + (val % 10) as u8;
+        val /= 10;
+    }
+
+    if value < 0 && i > 0 {
+        i -= 1;
+        buf[i] = b'-';
+    }
+
     core::str::from_utf8(&buf[i..]).unwrap()
 }
